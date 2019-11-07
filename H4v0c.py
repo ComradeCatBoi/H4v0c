@@ -3,7 +3,10 @@
 # print(os.popen("ip -4 route show default").read().split()) --- Enter in python CLI, examine further
 import socket
 import os
-import ipaddress
+import sys
+import threading
+
+from debian.debtags import output
 
 
 def greeting():
@@ -31,18 +34,35 @@ def lanScan():
     ipaddr = s.getsockname()[0]
     gateway = gw[2]
     host = socket.gethostname()
+    print("--------------------------------------")
     print("LOCAL")
     print("--------------------------------------")
     print("IP:", ipaddr, " GW:", gateway, " Host:", host)
+    print("--------------------------------------")
 
-    receivingPort = socket.socket()
-    listeningPort = 3301
-    receivingPort.bind((host, listeningPort))
+    target = input("\nPlease enter the target IP or range:  ")
+    targetIP = socket.gethostbyname((target))
+    startRange = input("Define port range start: ")
+    endRange = input("Define port range end: ")
+    print("Working...\n")
 
-    addressRange = input("\nPlease enter the target IP or range:  ")
-    print (addressRange)
+    try:
+        for port in range(int(startRange), int(endRange)):
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                result = sock.connect_ex((targetIP, port))
+                if result == 0:
+                    print("Port: " + str(port) + " is open: ")
+                    try:
+                        print(socket.getservbyport(port) + "\n")
+                    except OSError:
+                        print("Unknown service\n")
 
-    s.connect(( "foo", "foo"))
+                else:
+                    pass
+    except KeyboardInterrupt:
+        print("\nYou pressed Ctrl+C")
+        sys.exit()
+
 
 
 greeting()
