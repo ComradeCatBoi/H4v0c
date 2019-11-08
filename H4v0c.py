@@ -1,12 +1,13 @@
-# Not quite sure what this program will be quite yet
+# Network diagnostic/ pentesting/ whatever tool written by Christian Geer - https://github.com/H4l0g3n
+# Still in development
+# Resources:
 # https://www.raspberrypi.org/forums/viewtopic.php?t=188615
-# print(os.popen("ip -4 route show default").read().split()) --- Enter in python CLI, examine further
+# https://stackoverflow.com/questions/13368659/how-can-i-loop-through-an-ip-address-range-in-python
+# https://docs.python.org/3/library/socket.html
+
 import socket
 import os
-import sys
-import threading
-
-from debian.debtags import output
+import ipaddress
 
 
 def greeting():
@@ -18,11 +19,10 @@ def greeting():
     | | | \___  |\ V /\ |_/ / (__ 
     \_| |_/   |_/ \_/  \___/ \___|
     """)
-    print("     Wifi pentesting suite")
-    input("     Press enter to continue")
+    print("     Wifi penetration testing suite")
+    input("     Press enter to continue ")
     print("\n"
-          "     1. LAN Scan - Enumerate devices on your local network\n"
-          # "# 2. Port scan -  \n"
+          "     1. LAN Scan - Enumerate and scan devices on the local network\n"
           "\n"
           "\n")
 
@@ -40,30 +40,35 @@ def lanScan():
     print("IP:", ipaddr, " GW:", gateway, " Host:", host)
     print("--------------------------------------")
 
-    target = input("\nPlease enter the target IP or range:  ")
-    targetIP = socket.gethostbyname((target))
-    startRange = input("Define port range start: ")
-    endRange = input("Define port range end: ")
+    rangeStart = int(ipaddress.IPv4Address(input("\nIP range start: ")))
+    rangeEnd = int(ipaddress.IPv4Address(input("IP range end:   ")))
+    startRange = int(input("\nPort range start: "))
+    endRange = int(input("Port range end: "))
     print("Working...\n")
 
-    try:
-        for port in range(int(startRange), int(endRange)):
+    for ip in range(rangeStart, rangeEnd):
+        print("-" * 50)
+        response = os.system("ping -c 1 " + str(ip) + "\n")
+        if response == 0:
+            print("\n" + str(ipaddress.IPv4Address(ip)))
+            for port in range(startRange, endRange):
+                # print(port)    Uncomment this for diagnostic purposes
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                result = sock.connect_ex((targetIP, port))
+                sock.settimeout(0.5)
+                result = sock.connect_ex((str(ip), port))
                 if result == 0:
                     print("Port: " + str(port) + " is open: ")
                     try:
                         print(socket.getservbyport(port) + "\n")
                     except OSError:
                         print("Unknown service\n")
-
-                else:
-                    pass
-    except KeyboardInterrupt:
-        print("\nYou pressed Ctrl+C")
-        sys.exit()
-
+                        continue
+                    continue
+        else:
+            pass
 
 
 greeting()
 lanScan()
+
+input("Press enter to exit. :)")
